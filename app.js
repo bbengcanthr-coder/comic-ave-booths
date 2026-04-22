@@ -11,214 +11,202 @@ const firebaseConfig = {
   appId: "1:878775129696:web:b40685a1161a1e97a11505",
   measurementId: "G-JSC8CL14JP"
 };
-// 👆👆👆 =========================== 👆👆👆
-
-// ตรวจสอบเบื้องต้นว่ามีการใส่ Config หรือยัง
-if(firebaseConfig.apiKey === "YOUR_API_KEY") {
-    alert("ระบบตรวจพบว่ายังไม่ได้ใส่ Firebase Config ในไฟล์ app.js ข้อมูลจึงไม่แสดงครับ");
-}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// === 1. ระบบวาดแผนผัง (ทำงานทันที) ===
-function generateMapHTML() {
+// --- State การจัดการข้อมูล ---
+let allBooths = [];
+let filters = { day: 'all', tag: 'all', text: '' };
+
+// --- 1. ระบบวาดแผนผัง (ปรับให้เป๊ะขึ้น) ---
+function generateMap() {
     const centerBlocks = [4, 4, 6, 6, 6, 4, 4];
     const edgeBlocks = [4, 4, 4, 4, 4, 4, 4, 4];
 
-    function createBoothCol(prefix, blocks, startNum) {
-        let html = '';
-        let currentNum = startNum;
-        blocks.forEach(blockSize => {
+    function createCol(prefix, blocks, start) {
+        let html = ''; let num = start;
+        blocks.forEach(b => {
             html += `<div class="booth-group-v">`;
-            for (let i = 0; i < blockSize; i++) {
-                let n = currentNum < 10 ? `0${currentNum}` : currentNum;
+            for(let i=0; i<b; i++){
+                let n = num < 10 ? `0${num}` : num;
                 html += `<div class="booth" id="map-${prefix}${n}">${n}<div class="status-dot"></div></div>`;
-                currentNum--;
+                num--;
             }
             html += `</div>`;
         });
         return html;
     }
 
-    let mapHTML = `<div class="row-top"><div class="letter">A</div>`;
+    let html = `<div class="row-top"><div class="letter">A</div>`;
     let aNum = 1;
-    for(let group=0; group<8; group++) {
-        if(group === 4) mapHTML += `<div style="width: 25px;"></div>`;
-        mapHTML += `<div class="booth-group-h">`;
-        for(let i=0; i<4; i++) {
+    for(let g=0; g<8; g++){
+        if(g===4) html += `<div style="width: 25px;"></div>`;
+        html += `<div class="booth-group-h">`;
+        for(let i=0; i<4; i++){
             let n = aNum < 10 ? `0${aNum}` : aNum;
-            mapHTML += `<div class="booth" id="map-A${n}">${n}<div class="status-dot"></div></div>`;
+            html += `<div class="booth" id="map-A${n}">${n}<div class="status-dot"></div></div>`;
             aNum++;
         }
-        mapHTML += `</div>`;
+        html += `</div>`;
     }
-    mapHTML += `<div class="letter">A</div></div><div class="main-floor">`;
-    mapHTML += `<div class="col-single-wrapper"><div class="letter">B</div>${createBoothCol('B', edgeBlocks, 32)}<div class="letter">B</div></div>`;
+    html += `<div class="letter">A</div></div><div class="main-floor">`;
+    html += `<div class="col-wrapper"><div class="letter">B</div>${createCol('B', edgeBlocks, 32)}<div class="letter">B</div></div>`;
 
-    const pairedLetters = [['C','D'], ['E','F'], ['G','H'], ['I','J'], ['K','L'], ['M','N']];
-    pairedLetters.forEach(pair => {
-        let blockHTML = '';
-        let cNum = 34;
-        centerBlocks.forEach(blockSize => {
-            blockHTML += `<div class="pair-group"><div class="booth-group-v">`;
-            for(let i=0; i<blockSize; i++) {
-                let n = (cNum - i < 10) ? `0${cNum - i}` : cNum - i;
-                blockHTML += `<div class="booth" id="map-${pair[0]}${n}">${n}<div class="status-dot"></div></div>`;
-            }
-            blockHTML += `</div><div class="booth-group-v">`;
-            for(let i=0; i<blockSize; i++) {
-                let n = (cNum - i < 10) ? `0${cNum - i}` : cNum - i;
-                blockHTML += `<div class="booth" id="map-${pair[1]}${n}">${n}<div class="status-dot"></div></div>`;
-            }
-            blockHTML += `</div></div>`;
-            cNum -= blockSize;
+    const pairs = [['C','D'], ['E','F'], ['G','H'], ['I','J'], ['K','L'], ['M','N']];
+    pairs.forEach(p => {
+        let blockHtml = ''; let cNum = 34;
+        centerBlocks.forEach(b => {
+            blockHtml += `<div class="pair-group"><div class="booth-group-v">`;
+            for(let i=0; i<b; i++){ let n = (cNum-i<10)?`0${cNum-i}`:cNum-i; blockHtml += `<div class="booth" id="map-${p[0]}${n}">${n}<div class="status-dot"></div></div>`; }
+            blockHtml += `</div><div class="booth-group-v">`;
+            for(let i=0; i<b; i++){ let n = (cNum-i<10)?`0${cNum-i}`:cNum-i; blockHtml += `<div class="booth" id="map-${p[1]}${n}">${n}<div class="status-dot"></div></div>`; }
+            blockHtml += `</div></div>`;
+            cNum -= b;
         });
-        mapHTML += `<div class="col-pair-wrapper"><div class="letter-pair"><span>${pair[0]}</span><span>${pair[1]}</span></div>${blockHTML}<div class="letter-pair"><span>${pair[0]}</span><span>${pair[1]}</span></div></div>`;
+        html += `<div class="col-wrapper"><div class="letter-pair"><span>${p[0]}</span><span>${p[1]}</span></div>${blockHtml}<div class="letter-pair"><span>${p[0]}</span><span>${p[1]}</span></div></div>`;
     });
-    mapHTML += `<div class="col-single-wrapper"><div class="letter">O</div>${createBoothCol('O', edgeBlocks, 32)}<div class="letter">O</div></div></div>`;
-
-    document.getElementById('grid-container').innerHTML = mapHTML;
+    html += `<div class="col-wrapper"><div class="letter">O</div>${createCol('O', edgeBlocks, 32)}<div class="letter">O</div></div></div>`;
+    
+    document.getElementById('mapContainer').innerHTML = html;
 }
+generateMap();
 
-generateMapHTML(); // วาดแผนผังก่อนเลย
+// --- 2. การควบคุม UI และแท็บ ---
+const tabBtns = document.querySelectorAll('.tab-btn');
+const views = document.querySelectorAll('.view-section');
+const globalFilters = document.getElementById('globalFilters');
 
-// === 2. โลจิกสลับแท็บ ===
-const tabs = { map: document.getElementById('tabMap'), search: document.getElementById('tabSearch'), register: document.getElementById('tabRegister') };
-const views = { map: document.getElementById('viewMap'), search: document.getElementById('viewSearch'), register: document.getElementById('viewRegister') };
-
-function switchTab(target) {
-    Object.values(tabs).forEach(t => t.classList.remove('active'));
-    Object.values(views).forEach(v => v.classList.remove('active'));
-    tabs[target].classList.add('active');
-    views[target].classList.add('active');
-}
-tabs.map.addEventListener('click', () => switchTab('map'));
-tabs.search.addEventListener('click', () => switchTab('search'));
-tabs.register.addEventListener('click', () => switchTab('register'));
-
-let allBooths = [];
-let currentFilter = 'all';
-
-// ฟังก์ชันจัดฟอร์แมตเลขบูธให้เป็นมาตรฐาน (เช่น "a 1" -> "A01")
-function formatBoothNumber(raw) {
-    if (!raw) return "";
-    let clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, ''); // ลบช่องว่างและอักขระพิเศษ
-    // ถ้าพิมพ์มาแค่ 2 ตัวอักษร เช่น A1 ให้เติม 0 ตรงกลางเป็น A01
-    if (clean.length === 2) {
-        clean = clean[0] + '0' + clean[1];
-    }
-    return clean;
-}
-
-// === 3. อัปเดตแผนผังและรายการบูธ ===
-function updateMapDots() {
-    // ล้างจุดเก่าและคืนสีตัวอักษรเดิมก่อน
-    document.querySelectorAll('.status-dot').forEach(dot => {
-        dot.style.display = 'none';
-        dot.className = 'status-dot'; 
-    });
-    document.querySelectorAll('.booth').forEach(cell => { cell.style.color = ""; });
-
-    allBooths.forEach(booth => {
-        const bNo = formatBoothNumber(booth.booth_no);
-        const boothCell = document.getElementById(`map-${bNo}`);
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-target');
+        tabBtns.forEach(t => t.classList.remove('active'));
+        views.forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(target).classList.add('active');
         
-        if (boothCell) {
-            const dot = boothCell.querySelector('.status-dot');
-            dot.style.display = 'block';
-            if (booth.tag === 'เบงจันทร์') dot.classList.add('dot-bengchan');
-            else if (booth.tag === 'สิบศิลป์') dot.classList.add('dot-sipsil');
-            else dot.classList.add('dot-other');
-            
-            boothCell.style.color = "transparent"; // ซ่อนตัวเลข
-        }
+        // ซ่อนตัวกรองถ้าอยู่หน้าลงทะเบียน
+        globalFilters.style.display = target === 'viewRegister' ? 'none' : 'flex';
     });
+});
+
+// --- 3. ฟอร์แมตและเรนเดอร์ข้อมูล ---
+function formatBooth(raw) {
+    if(!raw) return "";
+    let c = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return c.length === 2 ? c[0] + '0' + c[1] : c;
 }
 
-function renderBoothList() {
+function getDayLabel(dayValue) {
+    if(dayValue === 'day1') return '30 พ.ค.';
+    if(dayValue === 'day2') return '31 พ.ค.';
+    return '30-31 พ.ค.';
+}
+
+function getDotClass(tag) {
+    if(tag === 'เบงจันทร์') return 'dot-blue';
+    if(tag === 'สิบศิลป์') return 'dot-red';
+    return 'dot-orange';
+}
+
+function checkMatch(booth) {
+    // กรองข้อความค้นหา
+    const matchText = booth.circle_name.toLowerCase().includes(filters.text) || booth.booth_no.toLowerCase().includes(filters.text);
+    // กรองแท็กคอมมู
+    const matchTag = filters.tag === 'all' || booth.tag === filters.tag;
+    // กรองวันจัดแสดง (ตรรกะ: ถ้าเลือกทุกวัน ให้ผ่าน / ถ้าเลือกวันใดวันหนึ่ง บูธต้องเป็น both หรือตรงกับวันที่เลือก)
+    const matchDay = filters.day === 'all' || booth.days === 'both' || booth.days === filters.day;
+    
+    return matchText && matchTag && matchDay;
+}
+
+function updateUI() {
+    // รีเซ็ตจุดบนแผนผัง
+    document.querySelectorAll('.status-dot').forEach(d => { d.style.display = 'none'; d.className = 'status-dot'; });
+    document.querySelectorAll('.booth').forEach(b => b.style.color = "");
+
     const list = document.getElementById('boothList');
     list.innerHTML = '';
-    const term = document.getElementById('searchInput').value.toLowerCase();
+    let count = 0;
 
-    const filtered = allBooths.filter(b => {
-        const matchText = b.circle_name.toLowerCase().includes(term) || b.booth_no.toLowerCase().includes(term);
-        const matchTag = currentFilter === 'all' || b.tag === currentFilter;
-        return matchText && matchTag;
-    });
-
-    if (filtered.length === 0) {
-        list.innerHTML = '<p class="loading-text">ไม่พบข้อมูลบูธที่ค้นหา หรือยังไม่มีคนลงทะเบียน</p>';
-        return;
-    }
-
-    filtered.forEach(b => {
-        list.innerHTML += `
-            <div class="booth-card">
-                <div class="card-header">
-                    <span class="booth-no">${formatBoothNumber(b.booth_no)}</span>
-                    <span class="tag ${b.tag}">${b.tag}</span>
+    allBooths.forEach(b => {
+        if (checkMatch(b)) {
+            count++;
+            
+            // อัปเดตรายการ
+            list.innerHTML += `
+                <div class="booth-card">
+                    <div class="card-top">
+                        <span class="b-no">${formatBooth(b.booth_no)}</span>
+                        <span class="b-day">📅 ${getDayLabel(b.days)}</span>
+                    </div>
+                    <h3 class="card-title">${b.circle_name}</h3>
+                    <p class="card-desc">${b.description}</p>
+                    <span class="b-tag"><span class="dot ${getDotClass(b.tag)}"></span> ${b.tag}</span>
                 </div>
-                <h3>${b.circle_name}</h3>
-                <p>${b.description}</p>
-            </div>
-        `;
+            `;
+
+            // อัปเดตแผนผัง
+            const cell = document.getElementById(`map-${formatBooth(b.booth_no)}`);
+            if(cell) {
+                const dot = cell.querySelector('.status-dot');
+                dot.style.display = 'block';
+                dot.classList.add(getDotClass(b.tag));
+                cell.style.color = "transparent";
+            }
+        }
     });
+
+    if (count === 0) list.innerHTML = '<div class="empty-state">ไม่พบข้อมูลบูธที่ค้นหา หรือยังไม่มีคนลงทะเบียนครับ</div>';
 }
 
-// === 4. ดึงข้อมูลจาก Firebase ===
-console.log("กำลังเชื่อมต่อฐานข้อมูล...");
+// --- 4. ดึงข้อมูลจาก Firebase ---
 onSnapshot(collection(db, "booths"), (snapshot) => {
     allBooths = [];
     snapshot.forEach((doc) => {
-        allBooths.push({ id: doc.id, ...doc.data() });
+        // รองรับข้อมูลเก่าที่อาจจะไม่มีฟิลด์ days (ตั้งค่าเริ่มต้นเป็น both)
+        let data = doc.data();
+        if(!data.days) data.days = 'both';
+        allBooths.push({ id: doc.id, ...data });
     });
-    console.log("ดึงข้อมูลสำเร็จ! พบ:", allBooths.length, "บูธ");
-    renderBoothList();
-    updateMapDots();
-}, (error) => {
-    console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
-    document.getElementById('boothList').innerHTML = '<p class="loading-text" style="color:red;">❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบ Firebase Config หรือ Rules</p>';
+    updateUI();
 });
 
-// === 5. บันทึกข้อมูล ===
+// --- 5. จัดการ Event การกรอง ---
+document.getElementById('searchInput').addEventListener('input', (e) => { filters.text = e.target.value.toLowerCase(); updateUI(); });
+document.getElementById('dayFilter').addEventListener('change', (e) => { filters.day = e.target.value; updateUI(); });
+document.querySelectorAll('.tag-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+        const targetBtn = e.target.closest('.tag-btn');
+        targetBtn.classList.add('active');
+        filters.tag = targetBtn.getAttribute('data-tag');
+        updateUI();
+    });
+});
+
+// --- 6. บันทึกข้อมูล ---
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.querySelector('.submit-btn');
-    btn.textContent = "กำลังบันทึก...";
-    btn.disabled = true;
+    const btn = document.querySelector('.btn-submit');
+    btn.textContent = "กำลังบันทึก..."; btn.disabled = true;
 
     try {
-        const rawBooth = document.getElementById('regBooth').value;
-        const formattedBooth = formatBoothNumber(rawBooth);
-
         await addDoc(collection(db, "booths"), {
-            booth_no: formattedBooth, // เซฟแบบจัดฟอร์แมตแล้วลง Database
-            circle_name: document.getElementById('regCircle').value,
+            days: document.getElementById('regDays').value, // เก็บข้อมูลวันที่เพิ่ม
+            booth_no: formatBooth(document.getElementById('regBooth').value),
             tag: document.getElementById('regTag').value,
+            circle_name: document.getElementById('regCircle').value,
             description: document.getElementById('regDesc').value,
             timestamp: serverTimestamp()
         });
         
-        alert('ลงทะเบียนบูธสำเร็จ!');
+        alert('บันทึกข้อมูลเรียบร้อยแล้วครับ!');
         e.target.reset();
-        switchTab('map'); 
+        document.querySelector('[data-target="viewMap"]').click(); 
     } catch (error) {
-        console.error("Error Saving:", error);
-        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+        console.error(error); alert('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่ครับ');
     } finally {
-        btn.textContent = "บันทึกข้อมูล";
-        btn.disabled = false;
+        btn.textContent = "บันทึกข้อมูล"; btn.disabled = false;
     }
-});
-
-// ค้นหาและฟิลเตอร์
-document.getElementById('searchInput').addEventListener('input', renderBoothList);
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        currentFilter = e.target.getAttribute('data-filter');
-        renderBoothList();
-    });
 });
