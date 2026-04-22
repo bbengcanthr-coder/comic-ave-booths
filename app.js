@@ -15,11 +15,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- State การจัดการข้อมูล ---
 let allBooths = [];
 let filters = { day: 'all', tag: 'all', text: '' };
 
-// --- 1. ระบบวาดแผนผัง (ปรับให้เป๊ะขึ้น) ---
+// --- 1. ระบบวาดแผนผัง ---
 function generateMap() {
     const centerBlocks = [4, 4, 6, 6, 6, 4, 4];
     const edgeBlocks = [4, 4, 4, 4, 4, 4, 4, 4];
@@ -84,17 +83,37 @@ tabBtns.forEach(btn => {
         views.forEach(v => v.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(target).classList.add('active');
-        
-        // ซ่อนตัวกรองถ้าอยู่หน้าลงทะเบียน
         globalFilters.style.display = target === 'viewRegister' ? 'none' : 'flex';
     });
 });
 
-// --- 3. ฟอร์แมตและเรนเดอร์ข้อมูล ---
-function formatBooth(raw) {
-    if(!raw) return "";
-    let c = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    return c.length === 2 ? c[0] + '0' + c[1] : c;
+// --- 3. ระบบดึงเลขบูธอัจฉริยะ (แก้ไขส่วนนี้เพื่อแก้ปัญหา) ---
+function extractBooths(raw) {
+    if (!raw) return [];
+    let cleanText = raw.toUpperCase();
+    let booths = [];
+    let currentLetter = '';
+
+    // Regex สแกนหา: ตัวอักษร(ถ้ามี) ตามด้วย สัญลักษณ์เว้นวรรค/ขีด(ถ้ามี) ตามด้วย ตัวเลข
+    const regex = /([A-Z]?)[^A-Z0-9]*(\d{1,2})/g;
+    let match;
+
+    while ((match = regex.exec(cleanText)) !== null) {
+        let letter = match[1];
+        let num = match[2];
+
+        if (letter) {
+            currentLetter = letter; // จำตัวอักษรล่าสุดไว้ (เช่น L)
+        } else if (!currentLetter) {
+            continue; // ถ้าไม่มีตัวอักษรนำหน้าเลย ให้ข้ามไป
+        }
+
+        if (num.length === 1) num = '0' + num;
+        booths.push(currentLetter + num); // นำตัวอักษรมาประกอบกับเลขแล้วเก็บไว้
+    }
+    
+    // ถ้าสแกนไม่เจออะไรเลย ให้คืนค่าเดิมเผื่อไว้
+    return booths.length > 0 ? booths : [cleanText.replace(/[^A-Z0-9]/g, '')];
 }
 
 function getDayLabel(dayValue) {
@@ -110,18 +129,13 @@ function getDotClass(tag) {
 }
 
 function checkMatch(booth) {
-    // กรองข้อความค้นหา
     const matchText = booth.circle_name.toLowerCase().includes(filters.text) || booth.booth_no.toLowerCase().includes(filters.text);
-    // กรองแท็กคอมมู
     const matchTag = filters.tag === 'all' || booth.tag === filters.tag;
-    // กรองวันจัดแสดง (ตรรกะ: ถ้าเลือกทุกวัน ให้ผ่าน / ถ้าเลือกวันใดวันหนึ่ง บูธต้องเป็น both หรือตรงกับวันที่เลือก)
     const matchDay = filters.day === 'all' || booth.days === 'both' || booth.days === filters.day;
-    
     return matchText && matchTag && matchDay;
 }
 
 function updateUI() {
-    // รีเซ็ตจุดบนแผนผัง
     document.querySelectorAll('.status-dot').forEach(d => { d.style.display = 'none'; d.className = 'status-dot'; });
     document.querySelectorAll('.booth').forEach(b => b.style.color = "");
 
@@ -133,11 +147,14 @@ function updateUI() {
         if (checkMatch(b)) {
             count++;
             
-            // อัปเดตรายการ
+            // ใช้ Array แสดงผลในการ์ดให้ดูสวยงาม เช่น L27, L28
+            const boothArray = extractBooths(b.booth_no);
+            const displayBoothNo = boothArray.join(', ');
+
             list.innerHTML += `
                 <div class="booth-card">
                     <div class="card-top">
-                        <span class="b-no">${formatBooth(b.booth_no)}</span>
+                        <span class="b-no">${displayBoothNo}</span>
                         <span class="b-day">📅 ${getDayLabel(b.days)}</span>
                     </div>
                     <h3 class="card-title">${b.circle_name}</h3>
@@ -146,25 +163,26 @@ function updateUI() {
                 </div>
             `;
 
-            // อัปเดตแผนผัง
-            const cell = document.getElementById(`map-${formatBooth(b.booth_no)}`);
-            if(cell) {
-                const dot = cell.querySelector('.status-dot');
-                dot.style.display = 'block';
-                dot.classList.add(getDotClass(b.tag));
-                cell.style.color = "transparent";
-            }
+            // วนลูปจุดสีบนแผนผังตามจำนวนบูธที่มี
+            boothArray.forEach(bNo => {
+                const cell = document.getElementById(`map-${bNo}`);
+                if(cell) {
+                    const dot = cell.querySelector('.status-dot');
+                    dot.style.display = 'block';
+                    dot.classList.add(getDotClass(b.tag));
+                    cell.style.color = "transparent";
+                }
+            });
         }
     });
 
     if (count === 0) list.innerHTML = '<div class="empty-state">ไม่พบข้อมูลบูธที่ค้นหา หรือยังไม่มีคนลงทะเบียนครับ</div>';
 }
 
-// --- 4. ดึงข้อมูลจาก Firebase ---
+// --- 4. ดึงข้อมูล & ควบคุม Event ---
 onSnapshot(collection(db, "booths"), (snapshot) => {
     allBooths = [];
     snapshot.forEach((doc) => {
-        // รองรับข้อมูลเก่าที่อาจจะไม่มีฟิลด์ days (ตั้งค่าเริ่มต้นเป็น both)
         let data = doc.data();
         if(!data.days) data.days = 'both';
         allBooths.push({ id: doc.id, ...data });
@@ -172,7 +190,6 @@ onSnapshot(collection(db, "booths"), (snapshot) => {
     updateUI();
 });
 
-// --- 5. จัดการ Event การกรอง ---
 document.getElementById('searchInput').addEventListener('input', (e) => { filters.text = e.target.value.toLowerCase(); updateUI(); });
 document.getElementById('dayFilter').addEventListener('change', (e) => { filters.day = e.target.value; updateUI(); });
 document.querySelectorAll('.tag-btn').forEach(btn => {
@@ -185,7 +202,6 @@ document.querySelectorAll('.tag-btn').forEach(btn => {
     });
 });
 
-// --- 6. บันทึกข้อมูล ---
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.querySelector('.btn-submit');
@@ -193,8 +209,8 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
     try {
         await addDoc(collection(db, "booths"), {
-            days: document.getElementById('regDays').value, // เก็บข้อมูลวันที่เพิ่ม
-            booth_no: formatBooth(document.getElementById('regBooth').value),
+            days: document.getElementById('regDays').value,
+            booth_no: document.getElementById('regBooth').value.toUpperCase(), // บันทึกตามที่พิมพ์มาตรงๆ เลย
             tag: document.getElementById('regTag').value,
             circle_name: document.getElementById('regCircle').value,
             description: document.getElementById('regDesc').value,
