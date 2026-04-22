@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic Ave 11 - Interactive Map & Directory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1>เบงจันทร์ตามเก็บ Comic Avenue 11</h1>
+                <p>Booth Directory & Registration</p>
+            </div>
+            <nav class="tabs">
+                <button id="tabMap" class="active">🗺️ แผนผังงาน</button>
+                <button id="tabSearch">🔍 รายชื่อบูธ</button>
+                <button id="tabRegister">📝 ลงทะเบียน</button>
+            </nav>
+        </header>
+
+        <main id="viewMap" class="view active">
+            <div class="map-legend">
+                <span class="legend-item"><span class="dot-indicator dot-bengchan"></span> เบงจันทร์</span>
+                <span class="legend-item"><span class="dot-indicator dot-sipsil"></span> สิบศิลป์</span>
+                <span class="legend-item"><span class="dot-indicator dot-other"></span> คอมมูอื่นๆ/ทั่วไป</span>
+            </div>
+            <div class="map-scroll-wrapper">
+                <div class="map-container" id="grid-container">
+                    </div>
+            </div>
+        </main>
+
+        <main id="viewSearch" class="view">
+            <div class="search-section">
+                <input type="text" id="searchInput" placeholder="พิมพ์ชื่อเซอร์เคิล, เลขบูธ...">
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                    <button class="filter-btn" data-filter="เบงจันทร์">เบงจันทร์</button>
+                    <button class="filter-btn" data-filter="สิบศิลป์">สิบศิลป์</button>
+                    <button class="filter-btn" data-filter="คอมมูอื่นๆ">คอมมูอื่นๆ</button>
+                    <button class="filter-btn" data-filter="ทั่วไป">ทั่วไป</button>
+                </div>
+            </div>
+            <div id="boothList" class="booth-list">
+                <p class="loading-text">กำลังโหลดข้อมูล...</p>
+            </div>
+        </main>
+
+        <main id="viewRegister" class="view">
+            <div class="form-card">
+                <h2>ข้อมูลบูธของคุณ</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>เลขบูธ</label>
+                        <input type="text" id="regBooth" placeholder="เช่น A01, C34" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อเซอร์เคิล</label>
+                        <input type="text" id="regCircle" placeholder="ชื่อร้านของคุณ" required>
+                    </div>
+                    <div class="form-group">
+                        <label>สังกัดคอมมู</label>
+                        <select id="regTag">
+                            <option value="เบงจันทร์">เบงจันทร์</option>
+                            <option value="สิบศิลป์">สิบศิลป์</option>
+                            <option value="คอมมูอื่นๆ">คอมมูอื่นๆ</option>
+                            <option value="ทั่วไป">ทั่วไป (ไม่ระบุคอมมู)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>รายละเอียดสินค้าพอสังเขป</label>
+                        <textarea id="regDesc" rows="3" placeholder="สติ๊กเกอร์, โปสการ์ด, อาร์ตบุ๊ก..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
