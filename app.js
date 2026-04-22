@@ -11,24 +11,29 @@ const firebaseConfig = {
   appId: "1:878775129696:web:b40685a1161a1e97a11505",
   measurementId: "G-JSC8CL14JP"
 };
+// 👆👆👆 =========================== 👆👆👆
+
+// ตรวจสอบเบื้องต้นว่ามีการใส่ Config หรือยัง
+if(firebaseConfig.apiKey === "YOUR_API_KEY") {
+    alert("ระบบตรวจพบว่ายังไม่ได้ใส่ Firebase Config ในไฟล์ app.js ข้อมูลจึงไม่แสดงครับ");
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// === 1. ระบบวาดแผนผัง (Map Generation) ===
+// === 1. ระบบวาดแผนผัง (ทำงานทันที) ===
 function generateMapHTML() {
     const centerBlocks = [4, 4, 6, 6, 6, 4, 4];
     const edgeBlocks = [4, 4, 4, 4, 4, 4, 4, 4];
 
-    function createBoothCol(prefix, blocks, startNum, isZeroPadded = true) {
+    function createBoothCol(prefix, blocks, startNum) {
         let html = '';
         let currentNum = startNum;
         blocks.forEach(blockSize => {
             html += `<div class="booth-group-v">`;
             for (let i = 0; i < blockSize; i++) {
-                let displayNum = isZeroPadded && currentNum < 10 ? `0${currentNum}` : currentNum;
-                let boothId = `${prefix}${displayNum}`;
-                html += `<div class="booth" id="map-${boothId}">${displayNum}<div class="status-dot"></div></div>`;
+                let n = currentNum < 10 ? `0${currentNum}` : currentNum;
+                html += `<div class="booth" id="map-${prefix}${n}">${n}<div class="status-dot"></div></div>`;
                 currentNum--;
             }
             html += `</div>`;
@@ -36,26 +41,19 @@ function generateMapHTML() {
         return html;
     }
 
-    let mapHTML = '';
-    
-    // Row A
-    mapHTML += `<div class="row-top"><div class="letter">A</div>`;
+    let mapHTML = `<div class="row-top"><div class="letter">A</div>`;
     let aNum = 1;
     for(let group=0; group<8; group++) {
         if(group === 4) mapHTML += `<div style="width: 25px;"></div>`;
         mapHTML += `<div class="booth-group-h">`;
         for(let i=0; i<4; i++) {
-            let displayNum = aNum < 10 ? `0${aNum}` : aNum;
-            let boothId = `A${displayNum}`;
-            mapHTML += `<div class="booth" id="map-${boothId}">${displayNum}<div class="status-dot"></div></div>`;
+            let n = aNum < 10 ? `0${aNum}` : aNum;
+            mapHTML += `<div class="booth" id="map-A${n}">${n}<div class="status-dot"></div></div>`;
             aNum++;
         }
         mapHTML += `</div>`;
     }
-    mapHTML += `<div class="letter">A</div></div>`;
-
-    // Main Floor
-    mapHTML += `<div class="main-floor">`;
+    mapHTML += `<div class="letter">A</div></div><div class="main-floor">`;
     mapHTML += `<div class="col-single-wrapper"><div class="letter">B</div>${createBoothCol('B', edgeBlocks, 32)}<div class="letter">B</div></div>`;
 
     const pairedLetters = [['C','D'], ['E','F'], ['G','H'], ['I','J'], ['K','L'], ['M','N']];
@@ -63,8 +61,7 @@ function generateMapHTML() {
         let blockHTML = '';
         let cNum = 34;
         centerBlocks.forEach(blockSize => {
-            blockHTML += `<div class="pair-group">`;
-            blockHTML += `<div class="booth-group-v">`;
+            blockHTML += `<div class="pair-group"><div class="booth-group-v">`;
             for(let i=0; i<blockSize; i++) {
                 let n = (cNum - i < 10) ? `0${cNum - i}` : cNum - i;
                 blockHTML += `<div class="booth" id="map-${pair[0]}${n}">${n}<div class="status-dot"></div></div>`;
@@ -79,24 +76,16 @@ function generateMapHTML() {
         });
         mapHTML += `<div class="col-pair-wrapper"><div class="letter-pair"><span>${pair[0]}</span><span>${pair[1]}</span></div>${blockHTML}<div class="letter-pair"><span>${pair[0]}</span><span>${pair[1]}</span></div></div>`;
     });
-
-    mapHTML += `<div class="col-single-wrapper"><div class="letter">O</div>${createBoothCol('O', edgeBlocks, 32)}<div class="letter">O</div></div>`;
-    mapHTML += `</div>`;
+    mapHTML += `<div class="col-single-wrapper"><div class="letter">O</div>${createBoothCol('O', edgeBlocks, 32)}<div class="letter">O</div></div></div>`;
 
     document.getElementById('grid-container').innerHTML = mapHTML;
 }
 
-// === 2. โลจิกการจัดการ UI และ ข้อมูล ===
-const tabs = {
-    map: document.getElementById('tabMap'),
-    search: document.getElementById('tabSearch'),
-    register: document.getElementById('tabRegister')
-};
-const views = {
-    map: document.getElementById('viewMap'),
-    search: document.getElementById('viewSearch'),
-    register: document.getElementById('viewRegister')
-};
+generateMapHTML(); // วาดแผนผังก่อนเลย
+
+// === 2. โลจิกสลับแท็บ ===
+const tabs = { map: document.getElementById('tabMap'), search: document.getElementById('tabSearch'), register: document.getElementById('tabRegister') };
+const views = { map: document.getElementById('viewMap'), search: document.getElementById('viewSearch'), register: document.getElementById('viewRegister') };
 
 function switchTab(target) {
     Object.values(tabs).forEach(t => t.classList.remove('active'));
@@ -104,7 +93,6 @@ function switchTab(target) {
     tabs[target].classList.add('active');
     views[target].classList.add('active');
 }
-
 tabs.map.addEventListener('click', () => switchTab('map'));
 tabs.search.addEventListener('click', () => switchTab('search'));
 tabs.register.addEventListener('click', () => switchTab('register'));
@@ -112,17 +100,30 @@ tabs.register.addEventListener('click', () => switchTab('register'));
 let allBooths = [];
 let currentFilter = 'all';
 
-// อัปเดตจุดสีบนแผนผัง
+// ฟังก์ชันจัดฟอร์แมตเลขบูธให้เป็นมาตรฐาน (เช่น "a 1" -> "A01")
+function formatBoothNumber(raw) {
+    if (!raw) return "";
+    let clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, ''); // ลบช่องว่างและอักขระพิเศษ
+    // ถ้าพิมพ์มาแค่ 2 ตัวอักษร เช่น A1 ให้เติม 0 ตรงกลางเป็น A01
+    if (clean.length === 2) {
+        clean = clean[0] + '0' + clean[1];
+    }
+    return clean;
+}
+
+// === 3. อัปเดตแผนผังและรายการบูธ ===
 function updateMapDots() {
-    // ล้างจุดเก่าทั้งหมดก่อน
+    // ล้างจุดเก่าและคืนสีตัวอักษรเดิมก่อน
     document.querySelectorAll('.status-dot').forEach(dot => {
         dot.style.display = 'none';
-        dot.className = 'status-dot'; // reset class
+        dot.className = 'status-dot'; 
     });
+    document.querySelectorAll('.booth').forEach(cell => { cell.style.color = ""; });
 
-    // วาดจุดใหม่ตามข้อมูล
     allBooths.forEach(booth => {
-        const boothCell = document.getElementById(`map-${booth.booth_no}`);
+        const bNo = formatBoothNumber(booth.booth_no);
+        const boothCell = document.getElementById(`map-${bNo}`);
+        
         if (boothCell) {
             const dot = boothCell.querySelector('.status-dot');
             dot.style.display = 'block';
@@ -130,8 +131,7 @@ function updateMapDots() {
             else if (booth.tag === 'สิบศิลป์') dot.classList.add('dot-sipsil');
             else dot.classList.add('dot-other');
             
-            // ทำให้เลขจางลงเพื่อให้จุดสีเด่นขึ้น
-            boothCell.style.color = "transparent"; 
+            boothCell.style.color = "transparent"; // ซ่อนตัวเลข
         }
     });
 }
@@ -148,7 +148,7 @@ function renderBoothList() {
     });
 
     if (filtered.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#718096; padding:20px;">ไม่พบข้อมูลบูธที่ค้นหา</p>';
+        list.innerHTML = '<p class="loading-text">ไม่พบข้อมูลบูธที่ค้นหา หรือยังไม่มีคนลงทะเบียน</p>';
         return;
     }
 
@@ -156,7 +156,7 @@ function renderBoothList() {
         list.innerHTML += `
             <div class="booth-card">
                 <div class="card-header">
-                    <span class="booth-no">${b.booth_no}</span>
+                    <span class="booth-no">${formatBoothNumber(b.booth_no)}</span>
                     <span class="tag ${b.tag}">${b.tag}</span>
                 </div>
                 <h3>${b.circle_name}</h3>
@@ -166,7 +166,22 @@ function renderBoothList() {
     });
 }
 
-// --- การทำงานกับ Firebase ---
+// === 4. ดึงข้อมูลจาก Firebase ===
+console.log("กำลังเชื่อมต่อฐานข้อมูล...");
+onSnapshot(collection(db, "booths"), (snapshot) => {
+    allBooths = [];
+    snapshot.forEach((doc) => {
+        allBooths.push({ id: doc.id, ...doc.data() });
+    });
+    console.log("ดึงข้อมูลสำเร็จ! พบ:", allBooths.length, "บูธ");
+    renderBoothList();
+    updateMapDots();
+}, (error) => {
+    console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+    document.getElementById('boothList').innerHTML = '<p class="loading-text" style="color:red;">❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบ Firebase Config หรือ Rules</p>';
+});
+
+// === 5. บันทึกข้อมูล ===
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.querySelector('.submit-btn');
@@ -174,14 +189,11 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     btn.disabled = true;
 
     try {
-        let rawBooth = document.getElementById('regBooth').value.toUpperCase().replace(/\s/g, '');
-        // จัดรูปแบบเลขบูธให้ตรงกับ ID (เช่น A1 -> A01)
-        if (rawBooth.length === 2) {
-            rawBooth = rawBooth[0] + '0' + rawBooth[1];
-        }
+        const rawBooth = document.getElementById('regBooth').value;
+        const formattedBooth = formatBoothNumber(rawBooth);
 
         await addDoc(collection(db, "booths"), {
-            booth_no: rawBooth,
+            booth_no: formattedBooth, // เซฟแบบจัดฟอร์แมตแล้วลง Database
             circle_name: document.getElementById('regCircle').value,
             tag: document.getElementById('regTag').value,
             description: document.getElementById('regDesc').value,
@@ -190,27 +202,17 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         
         alert('ลงทะเบียนบูธสำเร็จ!');
         e.target.reset();
-        switchTab('map'); // กลับไปหน้าแผนผังเพื่อดูจุดที่เพิ่งขึ้น
+        switchTab('map'); 
     } catch (error) {
-        console.error("Error:", error);
-        alert('เกิดข้อผิดพลาด');
+        console.error("Error Saving:", error);
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     } finally {
         btn.textContent = "บันทึกข้อมูล";
         btn.disabled = false;
     }
 });
 
-// ฟังการเปลี่ยนแปลงข้อมูล (Real-time)
-onSnapshot(collection(db, "booths"), (snapshot) => {
-    allBooths = [];
-    snapshot.forEach((doc) => {
-        allBooths.push({ id: doc.id, ...doc.data() });
-    });
-    renderBoothList();
-    updateMapDots();
-});
-
-// Event Listeners ค้นหาและฟิลเตอร์
+// ค้นหาและฟิลเตอร์
 document.getElementById('searchInput').addEventListener('input', renderBoothList);
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -220,6 +222,3 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
         renderBoothList();
     });
 });
-
-// สร้างแผนผังตอนโหลดเว็บ
-generateMapHTML();
