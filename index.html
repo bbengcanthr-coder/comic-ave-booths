@@ -3,78 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comic Ave 11 - Interactive Map & Directory</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Comic Ave 11 | Booth Directory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <div class="header-content">
-                <h1>🎪 Comic Avenue 11</h1>
-                <p>Booth Directory & Registration</p>
+    <div class="app-layout">
+        <header class="app-header">
+            <div class="header-text">
+                <h1>Comic Avenue 11</h1>
+                <p>30 - 31 พฤษภาคม 2569 @ Central Westgate</p>
             </div>
-            <nav class="tabs">
-                <button id="tabMap" class="active">🗺️ แผนผังงาน</button>
-                <button id="tabSearch">🔍 รายชื่อบูธ</button>
-                <button id="tabRegister">📝 ลงทะเบียน</button>
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-target="viewMap">แผนผัง</button>
+                <button class="tab-btn" data-target="viewSearch">รายชื่อ</button>
+                <button class="tab-btn" data-target="viewRegister">ลงทะเบียน</button>
             </nav>
         </header>
 
-        <main id="viewMap" class="view active">
-            <div class="map-legend">
-                <span class="legend-item"><span class="dot-indicator dot-bengchan"></span> เบงจันทร์</span>
-                <span class="legend-item"><span class="dot-indicator dot-sipsil"></span> สิบศิลป์</span>
-                <span class="legend-item"><span class="dot-indicator dot-other"></span> คอมมูอื่นๆ/ทั่วไป</span>
+        <div class="global-filters" id="globalFilters">
+            <select id="dayFilter" class="minimal-select">
+                <option value="all">ดูทุกวัน (30-31 พ.ค.)</option>
+                <option value="day1">เฉพาะวันเสาร์ที่ 30 พ.ค.</option>
+                <option value="day2">เฉพาะวันอาทิตย์ที่ 31 พ.ค.</option>
+            </select>
+            
+            <div class="tag-filters">
+                <button class="tag-btn active" data-tag="all">ทั้งหมด</button>
+                <button class="tag-btn" data-tag="เบงจันทร์"><span class="dot dot-blue"></span> เบงจันทร์</button>
+                <button class="tag-btn" data-tag="สิบศิลป์"><span class="dot dot-red"></span> สิบศิลป์</button>
+                <button class="tag-btn" data-tag="คอมมูอื่นๆ"><span class="dot dot-orange"></span> อื่นๆ</button>
             </div>
-            <div class="map-scroll-wrapper">
-                <div class="map-container" id="grid-container">
+        </div>
+
+        <main id="viewMap" class="view-section active">
+            <div class="map-wrapper">
+                <div class="map-container" id="mapContainer">
                     </div>
             </div>
         </main>
 
-        <main id="viewSearch" class="view">
-            <div class="search-section">
-                <input type="text" id="searchInput" placeholder="พิมพ์ชื่อเซอร์เคิล, เลขบูธ...">
-                <div class="filters">
-                    <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
-                    <button class="filter-btn" data-filter="เบงจันทร์">เบงจันทร์</button>
-                    <button class="filter-btn" data-filter="สิบศิลป์">สิบศิลป์</button>
-                    <button class="filter-btn" data-filter="คอมมูอื่นๆ">คอมมูอื่นๆ</button>
-                    <button class="filter-btn" data-filter="ทั่วไป">ทั่วไป</button>
-                </div>
+        <main id="viewSearch" class="view-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="พิมพ์ชื่อเซอร์เคิล, สินค้า หรือเลขบูธ (เช่น A01)...">
             </div>
-            <div id="boothList" class="booth-list">
-                <p class="loading-text">กำลังดึงข้อมูลจากฐานข้อมูล...</p>
+            <div id="boothList" class="booth-grid">
+                <div class="empty-state">กำลังโหลดข้อมูล...</div>
             </div>
         </main>
 
-        <main id="viewRegister" class="view">
-            <div class="form-card">
-                <h2>ข้อมูลบูธของคุณ</h2>
+        <main id="viewRegister" class="view-section">
+            <div class="form-container">
+                <h2 class="form-title">ข้อมูลบูธของคุณ</h2>
                 <form id="registerForm">
-                    <div class="form-group">
-                        <label>เลขบูธ</label>
-                        <input type="text" id="regBooth" placeholder="เช่น A01, C34" required>
-                    </div>
-                    <div class="form-group">
-                        <label>ชื่อเซอร์เคิล</label>
-                        <input type="text" id="regCircle" placeholder="ชื่อร้านของคุณ" required>
-                    </div>
-                    <div class="form-group">
-                        <label>สังกัดคอมมู</label>
-                        <select id="regTag">
-                            <option value="เบงจันทร์">เบงจันทร์</option>
-                            <option value="สิบศิลป์">สิบศิลป์</option>
-                            <option value="คอมมูอื่นๆ">คอมมูอื่นๆ</option>
-                            <option value="ทั่วไป">ทั่วไป (ไม่ระบุคอมมู)</option>
+                    <div class="input-group">
+                        <label>วันจัดแสดง <span>*</span></label>
+                        <select id="regDays" required>
+                            <option value="both">มาทั้ง 2 วัน (30-31 พ.ค.)</option>
+                            <option value="day1">มาเฉพาะวันเสาร์ (30 พ.ค.)</option>
+                            <option value="day2">มาเฉพาะวันอาทิตย์ (31 พ.ค.)</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>รายละเอียดสินค้าพอสังเขป</label>
+
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>เลขบูธ <span>*</span></label>
+                            <input type="text" id="regBooth" placeholder="เช่น A01, C34" required>
+                        </div>
+                        <div class="input-group">
+                            <label>สังกัด <span>*</span></label>
+                            <select id="regTag" required>
+                                <option value="เบงจันทร์">เบงจันทร์</option>
+                                <option value="สิบศิลป์">สิบศิลป์</option>
+                                <option value="คอมมูอื่นๆ">คอมมูอื่นๆ</option>
+                                <option value="ทั่วไป">ทั่วไป (ไม่ระบุ)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>ชื่อเซอร์เคิล <span>*</span></label>
+                        <input type="text" id="regCircle" placeholder="ระบุชื่อร้าน/ชื่อบูธ" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>สินค้าที่ขาย <span>*</span></label>
                         <textarea id="regDesc" rows="3" placeholder="สติ๊กเกอร์, โปสการ์ด, อาร์ตบุ๊ก..." required></textarea>
                     </div>
-                    <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
+
+                    <button type="submit" class="btn-submit">บันทึกข้อมูล</button>
                 </form>
             </div>
         </main>
