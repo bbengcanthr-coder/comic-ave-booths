@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comic Ave 11 | Booth Directory</title>
+    <title>Comic Ave 11 | Booth & Trading Directory</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -16,8 +16,9 @@
             </div>
             <nav class="nav-tabs">
                 <button class="tab-btn active" data-target="viewMap">แผนผัง</button>
-                <button class="tab-btn" data-target="viewSearch">รายชื่อ</button>
-                <button class="tab-btn" data-target="viewRegister">ลงทะเบียน</button>
+                <button class="tab-btn" data-target="viewSearch"> รายชื่อบูธ</button>
+                <button class="tab-btn" data-target="viewTrade"> เทรดการ์ด</button>
+                <button class="tab-btn" data-target="viewRegister"> ลงทะเบียน</button>
             </nav>
         </header>
 
@@ -37,24 +38,70 @@
         </div>
 
         <main id="viewMap" class="view-section active">
-            <div class="map-wrapper">
-                <div class="map-container" id="mapContainer">
-                    </div>
-            </div>
+            <div class="map-wrapper"><div class="map-container" id="mapContainer"></div></div>
         </main>
 
         <main id="viewSearch" class="view-section">
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="พิมพ์ชื่อเซอร์เคิล, สินค้า หรือเลขบูธ (เช่น A01)...">
             </div>
-            <div id="boothList" class="booth-grid">
-                <div class="empty-state">กำลังโหลดข้อมูล...</div>
+            <div id="boothList" class="booth-grid"></div>
+        </main>
+
+        <main id="viewTrade" class="view-section">
+            <div class="trade-header">
+                <h2>กระดานหาคนเทรดการ์ด</h2>
+                <button id="btnOpenTradeForm" class="btn-outline">➕ โพสต์หาคนเทรด</button>
+            </div>
+
+            <div id="tradeFormContainer" class="form-container hidden" style="margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 class="form-title" style="margin:0;">โพสต์การ์ดของคุณ</h3>
+                    <button id="btnCloseTradeForm" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <form id="tradeForm">
+                    <div class="input-group">
+                        <label>รูปภาพการ์ด (ถ่ายรูปหรือไฟล์ภาพ) <span>*</span></label>
+                        <input type="file" id="tradeImg" accept="image/*" required style="padding: 0.4rem;">
+                    </div>
+                    <div class="row-group">
+                        <div class="input-group">
+                            <label>ชื่อ OC / ตัวละคร <span>*</span></label>
+                            <input type="text" id="tradeOc" placeholder="ชื่อตัวละครบนการ์ด" required>
+                        </div>
+                        <div class="input-group">
+                            <label>สังกัด <span>*</span></label>
+                            <select id="tradeTag" required>
+                                <option value="เบงจันทร์">เบงจันทร์</option>
+                                <option value="สิบศิลป์">สิบศิลป์</option>
+                                <option value="คอมมูอื่นๆ">คอมมูอื่นๆ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>วันที่สะดวกเทรด <span>*</span></label>
+                        <select id="tradeDay" required>
+                            <option value="both">มาทั้ง 2 วัน (30-31 พ.ค.)</option>
+                            <option value="day1">เฉพาะวันเสาร์ (30 พ.ค.)</option>
+                            <option value="day2">เฉพาะวันอาทิตย์ (31 พ.ค.)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>เงื่อนไขการเทรด / ช่องทางติดต่อ</label>
+                        <textarea id="tradeNote" rows="2" placeholder="เช่น รับเทรดกับ OC สายวิทย์, ติดต่อ DM Twitter @xxx" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit">โพสต์หาคนเทรด</button>
+                </form>
+            </div>
+
+            <div id="tradeList" class="trade-grid">
+                <div class="empty-state">กำลังโหลดข้อมูลการ์ด...</div>
             </div>
         </main>
 
         <main id="viewRegister" class="view-section">
             <div class="form-container">
-                <h2 class="form-title">ข้อมูลบูธของคุณ</h2>
+                <h2 class="form-title">ลงทะเบียนข้อมูลบูธ</h2>
                 <form id="registerForm">
                     <div class="input-group">
                         <label>วันจัดแสดง <span>*</span></label>
@@ -64,7 +111,6 @@
                             <option value="day2">มาเฉพาะวันอาทิตย์ (31 พ.ค.)</option>
                         </select>
                     </div>
-
                     <div class="row-group">
                         <div class="input-group">
                             <label>เลขบูธ <span>*</span></label>
@@ -80,18 +126,15 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="input-group">
                         <label>ชื่อเซอร์เคิล <span>*</span></label>
                         <input type="text" id="regCircle" placeholder="ระบุชื่อร้าน/ชื่อบูธ" required>
                     </div>
-
                     <div class="input-group">
                         <label>สินค้าที่ขาย <span>*</span></label>
                         <textarea id="regDesc" rows="3" placeholder="สติ๊กเกอร์, โปสการ์ด, อาร์ตบุ๊ก..." required></textarea>
                     </div>
-
-                    <button type="submit" class="btn-submit">บันทึกข้อมูล</button>
+                    <button type="submit" class="btn-submit">บันทึกข้อมูลบูธ</button>
                 </form>
             </div>
         </main>
