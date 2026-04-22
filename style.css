@@ -1,0 +1,97 @@
+:root {
+    --bg-color: #f0f4f8;
+    --card-bg: #ffffff;
+    --text-main: #2d3748;
+    --text-muted: #718096;
+    --primary: #4299e1;
+    --primary-hover: #3182ce;
+    --map-bg: #e2f1f8;
+    
+    /* สีจุดบนแผนผัง */
+    --color-bengchan: #3182ce; /* น้ำเงิน */
+    --color-sipsil: #e53e3e;   /* แดง */
+    --color-other: #ed8936;    /* ส้ม */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Prompt', sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; }
+
+.app-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+/* --- Header & Navigation --- */
+header { margin-bottom: 20px; }
+.header-content { text-align: center; margin-bottom: 20px; }
+.header-content h1 { font-size: 28px; font-weight: 600; color: #1a202c; }
+.header-content p { color: var(--text-muted); font-size: 14px; }
+
+.tabs { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.tabs button { padding: 10px 20px; border: none; border-radius: 25px; background: var(--card-bg); color: var(--text-muted); font-family: 'Prompt'; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.tabs button:hover { background: #e2e8f0; }
+.tabs button.active { background: var(--text-main); color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+.view { display: none; animation: fadeIn 0.3s ease-in-out; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- Map Styles --- */
+.map-legend { display: flex; justify-content: center; gap: 20px; margin-bottom: 15px; font-size: 14px; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.dot-indicator { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.dot-bengchan { background-color: var(--color-bengchan); }
+.dot-sipsil { background-color: var(--color-sipsil); }
+.dot-other { background-color: var(--color-other); }
+
+.map-scroll-wrapper { width: 100%; overflow-x: auto; background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.map-container { min-width: 800px; /* บังคับความกว้างขั้นต่ำไม่ให้แผนผังเบี้ยวบนมือถือ */ position: relative; background-color: var(--map-bg); border: 8px solid #cbd5e0; padding: 30px; display: flex; flex-direction: column; gap: 25px; border-radius: 8px; margin: 0 auto; }
+
+/* Map Grid Structure */
+.row-top { display: flex; align-items: center; justify-content: space-between; }
+.booth-group-h { display: flex; gap: 2px; }
+.main-floor { display: flex; justify-content: space-between; gap: 25px; }
+.col-single-wrapper, .col-pair-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.letter, .letter-pair { font-size: 20px; font-weight: 600; color: #4a5568; }
+.letter-pair { display: flex; justify-content: space-between; width: 44px; }
+.booth-group-v { display: flex; flex-direction: column; gap: 2px; }
+.pair-group { display: flex; gap: 4px; }
+
+/* Individual Map Booth */
+.booth { width: 20px; height: 20px; background-color: #fff; border: 1px solid #a0aec0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: monospace; position: relative; border-radius: 2px; }
+.booth .status-dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* --- Search List Styles --- */
+.search-section { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+#searchInput { width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'Prompt'; font-size: 15px; margin-bottom: 15px; background: #f7fafc; transition: border 0.2s; }
+#searchInput:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-btn { padding: 6px 14px; border: 1px solid #e2e8f0; background: #fff; border-radius: 20px; cursor: pointer; font-family: 'Prompt'; font-size: 13px; transition: all 0.2s; }
+.filter-btn:hover { background: #edf2f7; }
+.filter-btn.active { background: var(--text-main); color: white; border-color: var(--text-main); }
+
+.booth-list { display: flex; flex-direction: column; gap: 15px; }
+.booth-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 4px solid #cbd5e0; transition: transform 0.2s; }
+.booth-card:hover { transform: translateY(-2px); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.booth-no { font-size: 18px; font-weight: 600; color: var(--text-main); background: #edf2f7; padding: 4px 10px; border-radius: 6px; }
+.tag { font-size: 12px; padding: 4px 10px; border-radius: 12px; font-weight: 600; }
+.tag.เบงจันทร์ { background: #ebf8ff; color: var(--color-bengchan); }
+.tag.สิบศิลป์ { background: #fff5f5; color: var(--color-sipsil); }
+.tag.คอมมูอื่นๆ, .tag.ทั่วไป { background: #fffaf0; color: var(--color-other); }
+.booth-card h3 { font-size: 18px; margin-bottom: 5px; }
+.booth-card p { color: var(--text-muted); font-size: 14px; }
+
+/* --- Form Styles --- */
+.form-card { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; }
+.form-card h2 { text-align: center; margin-bottom: 20px; font-size: 20px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'Prompt'; font-size: 15px; background: #f7fafc; transition: 0.2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+.submit-btn { width: 100%; padding: 14px; background: var(--text-main); color: white; border: none; border-radius: 8px; font-family: 'Prompt'; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.submit-btn:hover { background: #1a202c; }
+
+@media (max-width: 600px) {
+    .tabs button { padding: 8px 15px; font-size: 14px; }
+    .map-scroll-wrapper { padding: 10px; }
+    .form-card { padding: 20px; }
+}
